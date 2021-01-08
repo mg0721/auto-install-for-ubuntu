@@ -1,0 +1,7 @@
+# ex) new_repo=http://mirror.ubuntu.com
+# ex) git_mail=my_id@company.com
+# ex) gid_id=my_id
+
+new_repo=
+git_mail=
+git_id=
