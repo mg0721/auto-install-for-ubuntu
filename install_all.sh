@@ -15,7 +15,7 @@ CHANGE_REPO=false
 CURR_TIME="none"
 PY_VERSION=3.7
 
-VERBOSE=false
+VERBOSE=true
 
 print() {
     msg="$1" # The entire string including spaces is received into one variable.
@@ -28,7 +28,7 @@ print() {
         ERROR  ) res=${Yellow}"-> ERROR: $msg"${Off} ;;
         * )      res="$msg" ;;
     esac
-    echo -e $res
+    echo -e "$res"
 }
 
 check_wsl() {
