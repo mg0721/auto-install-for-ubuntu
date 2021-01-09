@@ -1,19 +1,19 @@
 #!/bin/bash
 
-base_dir=$(dirname $(realpath $0))
-source ${base_dir}/.myenv
-source ${base_dir}/scripts/colors.sh
-source ${base_dir}/scripts/time.sh
+BASE_PATH=$(dirname $(realpath $0))
+source ${BASE_PATH}/.myenv
+source ${BASE_PATH}/scripts/colors.sh
+source ${BASE_PATH}/scripts/time.sh
 
-download_dir=${base_dir}/download
-old_repo=http://archive.ubuntu.com
-new_repo=${new_repo}
-git_mail=${git_mail}
-git_id=${git_id}
-is_wsl=false
-change_repo=false
-curr_time="none"
-py_version=3.7
+DOWNLOAD_PATH=${BASE_PATH}/download
+OLD_REPO=http://archive.ubuntu.com
+NEW_REPO=${NEW_REPO}
+GIT_MAIL=${GIT_MAIL}
+GIT_ID=${GIT_ID}
+IS_WSL=false
+CHANGE_REPO=false
+CURR_TIME="none"
+PY_VERSION=3.7
 
 print() {
     msg="$1" # The entire string including spaces is received into one variable.
@@ -84,7 +84,7 @@ mycmd() {
 
 backup_file() {
     file=$1
-    mycmd sudo cp ${file} ${file}_${curr_time}_bak
+    mycmd sudo cp ${file} ${file}_${CURR_TIME}_bak
 }
 
 replace_string() {
@@ -98,16 +98,16 @@ replace_string() {
 
 ready() {
     title "READY"
-    mycmd mkdir -p ${download_dir}
+    mycmd mkdir -p ${DOWNLOAD_PATH}
 }
 
 ready_apt() {
     title "READY APT"
-    if [ ${change_repo} ]; then
-        if [ ! -z $new_repo ]; then
+    if [ ${CHANGE_REPO} ]; then
+        if [ ! -z $NEW_REPO ]; then
             sources_file=/etc/apt/sources.list
             backup_file ${sources_file}
-            replace_string ${sources_file} ${old_repo} ${new_repo}
+            replace_string ${sources_file} ${OLD_REPO} ${NEW_REPO}
         else
             print "Failed to replace strings in sources.list." ERROR
             exit
@@ -119,7 +119,7 @@ ready_apt() {
 
 cleanup() {
     title "CLEAN UP"
-    mycmd rm -r ${download_dir}
+    mycmd rm -r ${DOWNLOAD_PATH}
     mycmd sudo apt -y autoremove
 }
 
@@ -144,9 +144,9 @@ install_core() {
 install_git() {
     title "GIT"
     mycmd sudo apt -y install git git-lfs
-    if [ ! -z "$git_mail" ] || [ ! -z "$git_id" ]; then
-        mycmd git config --global user.email ${git_mail}
-        mycmd git config --global user.name  ${git_id}
+    if [ ! -z "$GIT_MAIL" ] || [ ! -z "$GIT_ID" ]; then
+        mycmd git config --global user.email ${GIT_MAIL}
+        mycmd git config --global user.name  ${GIT_ID}
     else
         print "Failed to set git configuration." ERROR
         exit
@@ -154,18 +154,18 @@ install_git() {
 }
 
 install_python() {
-    title "PYTHON${py_version}"
-    major=${py_version::1}
-    mycmd sudo apt -y install python${py_version} \
+    title "PYTHON${PY_VERSION}"
+    major=${PY_VERSION::1}
+    mycmd sudo apt -y install python${PY_VERSION} \
                                 python${major}-pip \
-                                python${py_version}-venv
-    mycmd python${py_version} -m pip install --upgrade pip
+                                python${PY_VERSION}-venv
+    mycmd python${PY_VERSION} -m pip install --upgrade pip
 }
 
-curr_time=$(get_currtime)
-is_wsl=$(check_wsl)
-change_repo=$(ask_yesno "Do you want to change Ubuntu repo?")
-py_version=$(ask_version "Which python vers do you want to install?" ${py_version})
+CURR_TIME=$(get_currtime)
+IS_WSL=$(check_wsl)
+CHANGE_REPO=$(ask_yesno "Do you want to change Ubuntu repo?")
+PY_VERSION=$(ask_version "Which python vers do you want to install?" ${PY_VERSION})
 
 ready
 ready_apt
