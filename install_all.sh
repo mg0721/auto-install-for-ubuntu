@@ -15,16 +15,20 @@ CHANGE_REPO=false
 CURR_TIME="none"
 PY_VERSION=3.7
 
+VERBOSE=false
+
 print() {
     msg="$1" # The entire string including spaces is received into one variable.
     mode=$2
     case $mode in
-        TITLE  ) echo -e ${Green}"$msg"${Off} ;;
-        SUCCESS) echo -e ${Yellow}"-> SUCCESS: $msg"${Off} ;;
-        FAIL   ) echo -e ${Yellow}"-> FAIL: $msg"${Off} ;;
-        ERROR  ) echo -e ${Yellow}"-> ERROR: $msg"${Off} ;;
-        * )      echo -e "$msg" ;;
+        TITLE  ) res=${Green}"$msg"${Off} ;;
+        SUCCESS) res=${Yellow}"-> SUCCESS: $msg"${Off} ;;
+        FAIL   ) res=${Yellow}"-> FAIL: $msg"${Off} ;;
+        WARNING) res=${Yellow}"-> WARNING: $msg"${Off} ;;
+        ERROR  ) res=${Yellow}"-> ERROR: $msg"${Off} ;;
+        * )      res="$msg" ;;
     esac
+    echo -e $res
 }
 
 check_wsl() {
@@ -73,7 +77,12 @@ ask_yesno() {
 
 mycmd() {
     command="$@"
-    $@ # Do not put another command between this command and the result check.
+    if [ ${VERBOSE} = true ]; then
+        "$@"
+    else
+        "$@" &> /dev/null
+    fi
+    # Don't put another command between a command and the result check.
     if [ $? -eq 0 ]; then
         print "${command}" SUCCESS
     else
@@ -88,11 +97,13 @@ backup_file() {
 }
 
 replace_string() {
-    func_name="${FUNCNAME[0]}"
-    print "[${func_name}]"
-    print " > File        : $1"
-    print " > Old string  : $2"
-    print " > New string  : $3"
+    if [ ${VERBOSE} = true ]; then
+        func_name="${FUNCNAME[0]}"
+        print "[${func_name}]"
+        print " > File        : $1"
+        print " > Old string  : $2"
+        print " > New string  : $3"
+    fi
     mycmd sudo sed -i "s|$2|$3|g" $1
 }
 
@@ -103,7 +114,7 @@ ready() {
 
 ready_apt() {
     title "READY APT"
-    if [ ${CHANGE_REPO} ]; then
+    if [ ${CHANGE_REPO} = true ]; then
         if [ ! -z $NEW_REPO ]; then
             sources_file=/etc/apt/sources.list
             backup_file ${sources_file}
@@ -131,7 +142,10 @@ install_network() {
     mycmd sudo apt -y install openssh-server
     mycmd sudo service ssh --full-restart
     if [ ! -f ~/.ssh/id_rsa ]; then
-        ssh-keygen -t rsa -N \"\" -f ~/.ssh/id_rsa
+        # Empty string will be represented as white space when printing command.
+        mycmd ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
+    else
+        print "'~/.ssh/id_rsa' file is already exist." WARNING
     fi
 }
 
