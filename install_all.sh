@@ -8,9 +8,12 @@ source ${base_dir}/scripts/time.sh
 download_dir=${base_dir}/download
 old_repo=http://archive.ubuntu.com
 new_repo=${new_repo}
+git_mail=${git_mail}
+git_id=${git_id}
 is_wsl=false
 change_repo=false
 curr_time="none"
+py_version=3.7
 
 print() {
     msg="$1" # The entire string including spaces is received into one variable.
@@ -41,9 +44,23 @@ title() {
     print "$sep $1 $sep" TITLE
 }
 
-ask_yesno() {
+ask_version() {
+    msg="$1"
+    default=$2
     while true; do
-        read -rp "$(echo -e "${Cyan}$1 [Y/n]: ${Off}")" yn
+        read -rp "$(echo -e "${Cyan}$1 [default:${default}]: ${Off}")" ver
+        case $ver in
+            "") ret=${default}; break ;;
+            * ) ret=${ver}; break ;;
+        esac
+    done
+    echo $ret
+}
+
+ask_yesno() {
+    msg="$1"
+    while true; do
+        read -rp "$(echo -e "${Cyan}${msg} [Y/n]: ${Off}")" yn
         case $yn in
             [Yy]* ) ret=true; break ;;
             ""    ) ret=true; break ;;
@@ -136,9 +153,19 @@ install_git() {
     fi
 }
 
+install_python() {
+    title "PYTHON${py_version}"
+    major=${py_version::1}
+    mycmd sudo apt -y install python${py_version} \
+                                python${major}-pip \
+                                python${py_version}-venv
+    mycmd python${py_version} -m pip install --upgrade pip
+}
+
 curr_time=$(get_currtime)
 is_wsl=$(check_wsl)
 change_repo=$(ask_yesno "Do you want to change Ubuntu repo?")
+py_version=$(ask_version "Which python vers do you want to install?" ${py_version})
 
 ready
 ready_apt
@@ -146,5 +173,6 @@ ready_apt
 install_core
 install_network
 install_git
+install_python
 
 cleanup
