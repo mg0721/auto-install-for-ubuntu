@@ -29,7 +29,7 @@ print() {
         ERROR  ) res=${Yellow}"-> ERROR: $msg"${Off} ;;
         * )      res="$msg" ;;
     esac
-    echo -e "$res"
+    printf "$res\n"
 }
 
 check_wsl() {
@@ -178,10 +178,10 @@ install_python() {
 }
 
 install_bash() {
+    title "BASHRC"
     if [ $(check_wsl) = true ]; then
         display="export DISPLAY=\$(cat /etc/resolv.conf | grep nameserver | awk '{print \$2}'):0.0"
         mycmd check_and_add_line "${display}" ~/.bashrc
-        echo $DISPLAY
     fi
 }
 
