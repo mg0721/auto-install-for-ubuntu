@@ -4,6 +4,7 @@ BASE_PATH=$(dirname $(realpath $0))
 source ${BASE_PATH}/.myenv
 source ${BASE_PATH}/scripts/colors.sh
 source ${BASE_PATH}/scripts/time.sh
+source ${BASE_PATH}/scripts/file.sh
 
 DOWNLOAD_PATH=${BASE_PATH}/download
 OLD_REPO=http://archive.ubuntu.com
@@ -176,6 +177,14 @@ install_python() {
     mycmd python${PY_VERSION} -m pip install --upgrade pip
 }
 
+install_bash() {
+    if [ $(check_wsl) = true ]; then
+        display="export DISPLAY=\$(cat /etc/resolv.conf | grep nameserver | awk '{print \$2}'):0.0"
+        mycmd check_and_add_line "${display}" ~/.bashrc
+        echo $DISPLAY
+    fi
+}
+
 CURR_TIME=$(get_currtime)
 IS_WSL=$(check_wsl)
 CHANGE_REPO=$(ask_yesno "Do you want to change Ubuntu repo?")
@@ -185,6 +194,7 @@ ready
 ready_apt
 
 install_core
+install_bash
 install_network
 install_git
 install_python
