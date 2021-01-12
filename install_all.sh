@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 BASE_PATH=$(dirname $(realpath $0))
 source ${BASE_PATH}/.myenv
 source ${BASE_PATH}/scripts/colors.sh
@@ -19,21 +21,23 @@ PY_VERSION=3.7
 VERBOSE=true
 
 print() {
-    msg="$1" # The entire string including spaces is received into one variable.
-    mode=$2
-    case $mode in
-        TITLE  ) res=${Green}"$msg"${Off} ;;
-        SUCCESS) res=${Yellow}"-> SUCCESS: $msg"${Off} ;;
-        FAIL   ) res=${Yellow}"-> FAIL: $msg"${Off} ;;
-        WARNING) res=${Yellow}"-> WARNING: $msg"${Off} ;;
-        ERROR  ) res=${Yellow}"-> ERROR: $msg"${Off} ;;
-        * )      res="$msg" ;;
+    local -r msg="$1" # The entire string including spaces is received into one variable.
+    local -r mode="$2"
+    local res
+
+    case ${mode} in
+        TITLE  ) res=${Green}"${msg}"${Off} ;;
+        SUCCESS) res=${Yellow}"-> SUCCESS: ${msg}"${Off} ;;
+        FAIL   ) res=${Yellow}"-> FAIL: ${msg}"${Off} ;;
+        WARNING) res=${Yellow}"-> WARNING: ${msg}"${Off} ;;
+        ERROR  ) res=${Yellow}"-> ERROR: ${msg}"${Off} ;;
+        * )      res="${msg}" ;;
     esac
     printf "$res\n"
 }
 
 check_wsl() {
-    ret=false
+    local ret=false
     if grep -qEi "(Microsoft|WSL)" /proc/version &> /dev/null; then
         ret=true
     fi
@@ -41,17 +45,17 @@ check_wsl() {
 }
 
 title() {
-    title_length=76
-    length=${#1}
-    padding=$(((${title_length}-length)/2))
+    local -r title_length=76
+    local -r length=${#1}
+    local -r padding=$(((${title_length}-length)/2))
     sep=$(printf '=%.0s' $(seq 1 $padding))
     print ""
     print "$sep $1 $sep" TITLE
 }
 
 ask_version() {
-    msg="$1"
-    default=$2
+    local -r msg="$1"
+    local -r default=$2
     while true; do
         read -rp "$(echo -e "${Cyan}$1 [default:${default}]: ${Off}")" ver
         case $ver in
@@ -63,7 +67,7 @@ ask_version() {
 }
 
 ask_yesno() {
-    msg="$1"
+    local -r msg="$1"
     while true; do
         read -rp "$(echo -e "${Cyan}${msg} [Y/n]: ${Off}")" yn
         case $yn in
@@ -77,7 +81,7 @@ ask_yesno() {
 }
 
 mycmd() {
-    command="$@"
+    local -r command="$@"
     if [ ${VERBOSE} = true ]; then
         "$@"
     else
@@ -93,19 +97,8 @@ mycmd() {
 }
 
 backup_file() {
-    file=$1
-    mycmd sudo cp ${file} ${file}_${CURR_TIME}_bak
-}
-
-replace_string() {
-    if [ ${VERBOSE} = true ]; then
-        func_name="${FUNCNAME[0]}"
-        print "[${func_name}]"
-        print " > File        : $1"
-        print " > Old string  : $2"
-        print " > New string  : $3"
-    fi
-    mycmd sudo sed -i "s|$2|$3|g" $1
+    local -r file=$1
+    mycmd sudo cp "${file}" "${file}"_"${CURR_TIME}"_bak
 }
 
 ready() {
@@ -119,7 +112,7 @@ ready_apt() {
         if [ ! -z $NEW_REPO ]; then
             sources_file=/etc/apt/sources.list
             backup_file ${sources_file}
-            replace_string ${sources_file} ${OLD_REPO} ${NEW_REPO}
+            file_replace_string ${sources_file} ${OLD_REPO} ${NEW_REPO}
         else
             print "Failed to replace strings in sources.list." ERROR
             exit
@@ -144,7 +137,7 @@ install_network() {
     mycmd sudo service ssh --full-restart
     if [ ! -f ~/.ssh/id_rsa ]; then
         # Empty string will be represented as white space when printing command.
-        mycmd ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
+        mycmd ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
     else
         print "'~/.ssh/id_rsa' file is already exist." WARNING
     fi
@@ -170,7 +163,7 @@ install_git() {
 
 install_python() {
     title "PYTHON${PY_VERSION}"
-    major=${PY_VERSION::1}
+    local -r major=${PY_VERSION::1}
     mycmd sudo apt -y install python${PY_VERSION} \
                                 python${major}-pip \
                                 python${PY_VERSION}-venv
@@ -179,9 +172,9 @@ install_python() {
 
 install_bash() {
     title "BASHRC"
-    if [ $(check_wsl) = true ]; then
+    if [ ${IS_WSL} = true ]; then
         display="export DISPLAY=\$(cat /etc/resolv.conf | grep nameserver | awk '{print \$2}'):0.0"
-        mycmd check_and_add_line "${display}" ~/.bashrc
+        file_check_and_add_line "${display}" ~/.bashrc
     fi
 }
 
